@@ -14,4 +14,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - seuemail@gmail.com  # Mude pro seu email real
+          - martinhareinhardt@gmail.com
