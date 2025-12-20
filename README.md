@@ -20,7 +20,7 @@ Perfect for mathematicians, physicists, artists, students, and neurodivergent mi
 
 ## Screenshots
 
-*(Add your own screenshots here after building the APK)*
+coming soon
 
 ``markdown
 <!-- Example placeholder -->
