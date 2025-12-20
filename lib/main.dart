@@ -24,6 +24,60 @@ class DrawingScreen extends StatefulWidget {
   State<DrawingScreen> createState() => _DrawingScreenState();
 }
 
+// === ELEMENTOS ===
+// Moved the definition of DrawingElement and its subclasses here,
+// before they are used in _DrawingScreenState.
+abstract class DrawingElement {}
+
+class FreePoint extends DrawingElement {
+  final Offset pos;
+  FreePoint(this.pos);
+}
+
+class GeomText extends DrawingElement {
+  final Offset pos;
+  final String text;
+  GeomText(this.pos, this.text);
+}
+
+class GeomCircle extends DrawingElement {
+  final Offset center;
+  final double radius;
+  GeomCircle({required this.center, required this.radius});
+}
+
+class GeomPolygon extends DrawingElement {
+  final Offset center;
+  final int sides;
+  final double radius;
+  final double rotation;
+  GeomPolygon({required this.center, required this.sides, required this.radius, this.rotation = 0});
+}
+
+class GeomLine extends DrawingElement {
+  final Offset start, end;
+  GeomLine({required this.start, required this.end});
+}
+
+class GeomSpiral extends DrawingElement {
+  final Offset center;
+  final int revolutions;
+  GeomSpiral({required this.center, required this.revolutions});
+}
+
+class GeomAngle extends DrawingElement {
+  final Offset center;
+  final double armLength;
+  GeomAngle({required this.center, required this.armLength});
+}
+
+class GeomVector extends DrawingElement {
+  final Offset start, end;
+  GeomVector({required this.start, required this.end});
+}
+// === END ELEMENTS ===
+
+
 class _DrawingScreenState extends State<DrawingScreen> {
   List<DrawingElement> elements = [];
   bool isLinearMode = false;
@@ -35,6 +89,9 @@ class _DrawingScreenState extends State<DrawingScreen> {
   void _addElement(Offset position) {
     setState(() {
       switch (selectedTool) {
+        case 'free':
+          elements.add(FreePoint(position));
+          break;
         case 'text':
           final texts = ['x² + y² = r²', 'E = mc²', 'F = ma', 'π ≈ 3.14159', '∫ f(x) dx', 'φ = (1+√5)/2', 'i² = -1', '42'];
           final text = texts[DateTime.now().millisecond % texts.length];
@@ -56,16 +113,16 @@ class _DrawingScreenState extends State<DrawingScreen> {
           elements.add(GeomPolygon(center: position, sides: 6, radius: 65));
           break;
         case 'line':
-          elements.add(GeomLine(start: position - Offset(150, 0), end: position + Offset(150, 0)));
+          elements.add(GeomLine(start: position - const Offset(75, 0), end: position + const Offset(75, 0)));
           break;
         case 'spiral':
-          elements.add(GeomSpiral(center: position, revolutions: 5));
+          elements.add(GeomSpiral(center: position, revolutions: 3)); // Reduced revolutions for better visualization
           break;
         case 'angle':
           elements.add(GeomAngle(center: position, armLength: 80));
           break;
         case 'vector':
-          elements.add(GeomVector(start: position, end: position + Offset(120, -70)));
+          elements.add(GeomVector(start: position, end: position + const Offset(120, -70)));
           break;
       }
     });
@@ -86,76 +143,237 @@ F = ma \\quad r = a e^{b\\theta}
 \\]
 
 ### Código Python:
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-theta = np.linspace(0, 10*np.pi, 500)
-r = np.exp(0.2*theta)
-plt.polar(theta, r)
-plt.show()
 """;
-});
-}
-@override Widget build(BuildContext context) { return Scaffold( appBar: AppBar( title: const Text('Aurea Canvas - Não Linear'), backgroundColor: Colors.deepPurple[400], actions: [ IconButton(icon: const Icon(Icons.cleaning_services), onPressed: _clear), Padding( padding: const EdgeInsets.only(right: 16), child: Row( children: [ Text(isLinearMode ? 'Linear' : 'Não Linear', style: const TextStyle(color: Colors.white)), Switch(value: isLinearMode, onChanged: (v) => setState(() => isLinearMode = v), activeColor: Colors.white), ], ), ), ], ), body: Column( children: [ // Barra de ferramentas completa Container( height: 90, color: Colors.grey[150], child: SingleChildScrollView( scrollDirection: Axis.horizontal, child: Row(children: [ _tool('free', Icons.gesture, 'Livre'), _tool('text', Icons.text_fields, 'Texto'), _tool('circle', Icons.circle_outlined, 'Círculo'), _tool('triangle', Icons.change_history, 'Triângulo'), _tool('square', Icons.crop_square, 'Quadrado'), _tool('diamond', Icons.diamond, 'Losango'), _tool('hexagon', Icons.hexagon_outlined, 'Hexágono'), _tool('line', Icons.horizontal_rule, 'Reta'), _tool('spiral', Icons.auto_fix_high, 'Espiral'), _tool('angle', Icons.sports_score, 'Ângulo'), _tool('vector', Icons.arrow_forward, 'Vetor'), ]), ), ), // Canvas Expanded( child: GestureDetector( onTapDown: (d) => _addElement(d.localPosition), onPanUpdate: (d) { if (selectedTool == 'free') { setState(() => elements.add(FreePoint(d.localPosition))); } }, child: CustomPaint( painter: CanvasPainter(elements, isLinearMode), size: Size.infinite, ), ), ), // Painel inferior IA Container( height: 200, color: Colors.grey[100], padding: const EdgeInsets.all(12), child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [ const Text('Versão Linear (gerada pela IA)', style: TextStyle(fontWeight: FontWeight.bold)), ElevatedButton(onPressed: _askAI, child: const Text('Perguntar à IA')), ], ), const Divider(), Expanded(child: SingleChildScrollView(child: Text(aiResponse))), ], ), ), ], ), ); }
-Widget _tool(String tool, IconData icon, String label) { bool sel = selectedTool == tool; return Padding( padding: const EdgeInsets.all(8), child: Column( children: [ IconButton( icon: Icon(icon, color: sel ? Colors.white : Colors.deepPurple, size: 32), onPressed: () => setState(() => selectedTool = tool), style: ButtonStyle(backgroundColor: MaterialStateProperty.all(sel ? Colors.deepPurple : Colors.white)), ), Text(label, style: const TextStyle(fontSize: 10)), ], ), ); } }
-// === ELEMENTOS === abstract class DrawingElement {}
-class FreePoint extends DrawingElement { final Offset pos; FreePoint(this.pos); }
-class GeomText extends DrawingElement { final Offset pos; final String text; GeomText(this.pos, this.text); }
-class GeomCircle extends DrawingElement { final Offset center; final double radius; GeomCircle({required this.center, required this.radius}); }
-class GeomPolygon extends DrawingElement { final Offset center; final int sides; final double radius; final double rotation; GeomPolygon({required this.center, required this.sides, required this.radius, this.rotation = 0}); }
-class GeomLine extends DrawingElement { final Offset start, end; GeomLine({required this.start, required this.end}); }
-class GeomSpiral extends DrawingElement { final Offset center; final int revolutions; GeomSpiral({required this.center, required this.revolutions}); }
-class GeomAngle extends DrawingElement { final Offset center; final double armLength; GeomAngle({required this.center, required this.armLength}); }
-class GeomVector extends DrawingElement { final Offset start, end; GeomVector({required this.start, required this.end}); }
-// === PAINTER === class CanvasPainter extends CustomPainter { final List elements; final bool isLinearMode;
-CanvasPainter(this.elements, this.isLinearMode);
-@override void paint(Canvas canvas, Size size) { final paint = Paint()..strokeWidth = 4..strokeCap = StrokeCap.round;
-if (isLinearMode) {
-  final lp = Paint()..color = Colors.blue[100]!..strokeWidth = 1;
-  for (double y = 0; y < size.height; y += 50) canvas.drawLine(Offset(0, y), Offset(size.width, y), lp);
+    });
+  }
+
+  // FIX: Implement the build method for the State class
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Aurea Canvas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline),
+            onPressed: _askAI,
+            tooltip: 'Perguntar à IA',
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _clear,
+            tooltip: 'Limpar',
+          ),
+          Switch(
+            value: isLinearMode,
+            onChanged: (bool value) {
+              setState(() {
+                isLinearMode = value;
+              });
+            },
+            trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.deepPurpleAccent;
+              }
+              return Colors.grey;
+            }),
+            thumbIcon: WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Icon(Icons.straighten, color: Colors.white);
+              }
+              return const Icon(Icons.gesture, color: Colors.white);
+            }),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Text(isLinearMode ? 'Linear' : 'Livre'),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTapUp: (details) => _addElement(details.localPosition),
+              child: CustomPaint(
+                painter: AureaCanvasPainter(elements: elements, isLinearMode: isLinearMode),
+                child: SizedBox.expand(), // Make CustomPaint fill the available space
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            color: Colors.grey[200],
+            constraints: const BoxConstraints(minHeight: 100, maxHeight: 150), // Constrain height for AI response
+            child: SingleChildScrollView(
+              child: Text(aiResponse),
+            ),
+          ),
+          _buildToolSelectionBar(), // Tool selection bar at the bottom
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolSelectionBar() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: Row(
+        children: [
+          _buildToolButton('free', Icons.brush, 'Livre'),
+          _buildToolButton('text', Icons.text_fields, 'Texto'),
+          _buildToolButton('circle', Icons.circle_outlined, 'Círculo'),
+          _buildToolButton('triangle', Icons.change_history, 'Triângulo'), // More accurate icon for triangle
+          _buildToolButton('square', Icons.square_outlined, 'Quadrado'),
+          _buildToolButton('diamond', Icons.crop_rotate, 'Losango'),
+          _buildToolButton('hexagon', Icons.hexagon_outlined, 'Hexágono'),
+          _buildToolButton('line', Icons.horizontal_rule, 'Linha'),
+          _buildToolButton('spiral', Icons.waves, 'Espiral'),
+          _buildToolButton('angle', Icons.architecture, 'Ângulo'),
+          _buildToolButton('vector', Icons.arrow_right_alt, 'Vetor'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolButton(String toolName, IconData iconData, String label) {
+    bool isSelected = selectedTool == toolName;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: OutlinedButton.icon(
+        onPressed: () {
+          setState(() {
+            selectedTool = toolName;
+          });
+        },
+        style: OutlinedButton.styleFrom(
+          backgroundColor: isSelected ? Theme.of(context).primaryColor.withAlpha(51) : null, // Fix: Changed .withOpacity(0.2) to .withAlpha(51)
+          side: BorderSide(
+            color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        ),
+        icon: Icon(iconData, color: isSelected ? Theme.of(context).primaryColor : Colors.black54),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Theme.of(context).primaryColor : Colors.black54,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-for (var e in elements) {
-  if (e is FreePoint) canvas.drawCircle(e.pos, 3, paint..color = Colors.black);
-  if (e is GeomText) {
-    final tp = TextPainter(text: TextSpan(text: e.text, style: const TextStyle(color: Colors.black, fontSize: 26)), textDirection: TextDirection.ltr);
-    tp.layout();
-    tp.paint(canvas, e.pos - Offset(tp.width / 2, tp.height / 2));
-  }
-  if (e is GeomCircle) canvas.drawCircle(e.center, e.radius, paint..color = Colors.blue..style = PaintingStyle.stroke);
-  if (e is GeomPolygon) {
-    final path = Path();
-    for (int i = 0; i < e.sides; i++) {
-      double a = e.rotation + 2 * math.pi * i / e.sides;
-      Offset pt = e.center + Offset(e.radius * math.cos(a), e.radius * math.sin(a));
-      i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
+// CustomPainter for drawing the elements on the canvas
+class AureaCanvasPainter extends CustomPainter {
+  final List<DrawingElement> elements;
+  final bool isLinearMode;
+
+  AureaCanvasPainter({required this.elements, required this.isLinearMode});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    for (var element in elements) {
+      if (element is FreePoint) {
+        canvas.drawCircle(element.pos, 3, paint..style = PaintingStyle.fill);
+      } else if (element is GeomText) {
+        textPainter.text = TextSpan(
+          text: element.text,
+          style: const TextStyle(color: Colors.black, fontSize: 16),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, element.pos);
+      } else if (element is GeomCircle) {
+        canvas.drawCircle(element.center, element.radius, paint);
+      } else if (element is GeomPolygon) {
+        final Path path = Path();
+        for (int i = 0; i < element.sides; i++) {
+          final double angle = (2 * math.pi / element.sides) * i + element.rotation;
+          final Offset point = Offset(
+            element.center.dx + element.radius * math.cos(angle),
+            element.center.dy + element.radius * math.sin(angle),
+          );
+          if (i == 0) {
+            path.moveTo(point.dx, point.dy);
+          } else {
+            path.lineTo(point.dx, point.dy);
+          }
+        }
+        path.close();
+        canvas.drawPath(path, paint);
+      } else if (element is GeomLine) {
+        canvas.drawLine(element.start, element.end, paint);
+      } else if (element is GeomSpiral) {
+        final Path path = Path();
+        const double initialRadius = 5.0; // Start closer to center
+        const double tightness = 3.0; // Controls how tight the spiral is
+        const int numSegments = 360 * 5; // More segments for a smoother spiral
+        
+        path.moveTo(element.center.dx, element.center.dy); // Start at the center
+
+        for (int i = 0; i <= numSegments; i++) {
+          final double angle = (i / numSegments) * (2 * math.pi * element.revolutions);
+          final double radius = initialRadius + tightness * angle;
+          final Offset point = Offset(
+            element.center.dx + radius * math.cos(angle),
+            element.center.dy + radius * math.sin(angle),
+          );
+          if (i == 0) {
+            path.moveTo(point.dx, point.dy);
+          } else {
+            path.lineTo(point.dx, point.dy);
+          }
+        }
+        canvas.drawPath(path, paint);
+      } else if (element is GeomAngle) {
+        // Draw first arm horizontally
+        canvas.drawLine(element.center, element.center + Offset(element.armLength, 0), paint);
+        // Draw second arm at 45 degrees
+        canvas.drawLine(element.center, element.center + Offset(element.armLength * math.cos(math.pi / 4), element.armLength * math.sin(math.pi / 4)), paint);
+        // Draw an arc to represent the angle
+        canvas.drawArc(
+          Rect.fromCircle(center: element.center, radius: element.armLength / 3),
+          0, // Start angle
+          math.pi / 4, // Sweep angle (45 degrees)
+          false, // Don't use center
+          paint,
+        );
+      } else if (element is GeomVector) {
+        canvas.drawLine(element.start, element.end, paint);
+        // Draw arrowhead
+        const double arrowSize = 15.0;
+        final double angle = math.atan2(element.end.dy - element.start.dy, element.end.dx - element.start.dx);
+        final Path arrowPath = Path();
+        arrowPath.moveTo(element.end.dx, element.end.dy);
+        arrowPath.lineTo(
+          element.end.dx - arrowSize * math.cos(angle - math.pi / 6),
+          element.end.dy - arrowSize * math.sin(angle - math.pi / 6),
+        );
+        arrowPath.moveTo(element.end.dx, element.end.dy); // Move back to end point to draw other side
+        arrowPath.lineTo(
+          element.end.dx - arrowSize * math.cos(angle + math.pi / 6),
+          element.end.dy - arrowSize * math.sin(angle + math.pi / 6),
+        );
+        canvas.drawPath(arrowPath, paint);
+      }
     }
-    path.close();
-    canvas.drawPath(path, paint..color = Colors.green[800]!..style = PaintingStyle.stroke);
   }
-  if (e is GeomLine) canvas.drawLine(e.start, e.end, paint..color = Colors.black);
-  if (e is GeomSpiral) {
-    final path = Path();
-    path.moveTo(e.center.dx, e.center.dy);
-    for (double t = 0; t < e.revolutions * 2 * math.pi; t += 0.05) {
-      double r = 6 + 12 * t;
-      path.lineTo(e.center.dx + r * math.cos(t), e.center.dy + r * math.sin(t));
-    }
-    canvas.drawPath(path, paint..color = Colors.purple[700]!);
-  }
-  if (e is GeomAngle) {
-    canvas.drawLine(e.center, e.center + Offset(e.armLength, 0), paint..color = Colors.orange);
-    canvas.drawLine(e.center, e.center + Offset(e.armLength * 0.7, -e.armLength * 0.7), paint..color = Colors.orange);
-    canvas.drawArc(Rect.fromCircle(center: e.center, radius: 35), -math.pi / 4, math.pi / 2, false, paint..color = Colors.orange);
-  }
-  if (e is GeomVector) {
-    canvas.drawLine(e.start, e.end, paint..color = Colors.red[700]!..strokeWidth = 5);
-    double dir = (e.end - e.start).direction;
-    Offset l = e.end + Offset(20 * math.cos(dir + 5*math.pi/6), 20 * math.sin(dir + 5*math.pi/6));
-    Offset r = e.end + Offset(20 * math.cos(dir - 5*math.pi/6), 20 * math.sin(dir - 5*math.pi/6));
-    canvas.drawLine(e.end, l, paint..color = Colors.red[700]!..strokeWidth = 5);
-    canvas.drawLine(e.end, r, paint..color = Colors.red[700]!..strokeWidth = 5);
+
+  @override
+  bool shouldRepaint(covariant AureaCanvasPainter oldDelegate) {
+    return elements != oldDelegate.elements || isLinearMode != oldDelegate.isLinearMode;
   }
 }
-}
-@override bool shouldRepaint(covariant CustomPainter old) => true; }
