@@ -1,38 +1,17 @@
 workflows:
-  android-workflow:
-    name: Android Build
-    max_build_duration: 60
+  android:
+    name: Android APK Build
     instance_type: mac_mini_m1
-    integrations:
-      google_play:
-        # Opcional: se quiser publicar na Play Store depois, adiciona aqui
-    triggering:
-      events:
-        - push
-        - tag
-      branch_patterns:
-        - pattern: '*'
-          include: true
-          source: true
     environment:
-      groups:
-        - android_signing
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
-      - name: Install dependencies
-        script: |
-          flutter pub get
+      - name: Get Flutter packages
+        script: flutter pub get
       - name: Build APK
-        script: |
-          flutter build apk --release
+        script: flutter build apk --release
     artifacts:
-      - build/**/outputs/apk/**/*.apk
+      - build/app/outputs/flutter-apk/app-release.apk
     publishing:
       email:
         recipients:
-          - seuemail@example.com  # Coloque seu email aqui pra receber notificação
-        notify:
-          success: true
-          failure: true
+          - seuemail@gmail.com  # Mude pro seu email real
