@@ -1,5 +1,13 @@
 import 'dart:convert';
+import '../project/derived_file.dart';
+import 'local_storage.dart';
 
+Future<void> saveDerived(DerivedFile derived) async {
+  await storage.saveFile(
+    fileName: '${derived.id}.${derived.format}.json',
+    content: derived.toJson(),
+  );
+}
 class DerivedFile {
   final String id;
   final String sourceId;
