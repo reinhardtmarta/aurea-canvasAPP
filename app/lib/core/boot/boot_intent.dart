@@ -2,14 +2,17 @@ enum BootIntentType {
   translate,
   export,
   analyze,
+  unknown,
 }
 
 class BootIntent {
   final BootIntentType type;
-  final String targetFormat;
+  final String? targetFormat;
+  final bool needsConfirmation;
 
   BootIntent({
     required this.type,
-    required this.targetFormat,
+    this.targetFormat,
+    this.needsConfirmation = false,
   });
 }
