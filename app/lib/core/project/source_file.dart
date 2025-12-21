@@ -1,5 +1,15 @@
 import 'dart:convert';
+import '../project/source_file.dart';
+import 'local_storage.dart';
 
+final storage = LocalStorageService();
+
+Future<void> saveSource(SourceFile source) async {
+  await storage.saveFile(
+    fileName: '${source.id}.source.json',
+    content: source.toJson(),
+  );
+}
 class SourceFile {
   final String id;
   final DateTime createdAt;
