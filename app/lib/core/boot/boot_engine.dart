@@ -1,20 +1,30 @@
+import 'boot_parser.dart';
+import 'boot_intent.dart';
 import '../project/source_file.dart';
 import '../project/derived_file.dart';
-import 'boot_intent.dart';
 import 'dart:math';
 
 class BootEngine {
+  final _parser = BootParser();
+
+  BootIntent parseInput(String input) {
+    return _parser.parse(input);
+  }
+
   DerivedFile execute(SourceFile source, BootIntent intent) {
-    // Placeholder lógico — IA vem depois
+    if (intent.type == BootIntentType.unknown) {
+      throw Exception('Intent not recognized');
+    }
+
     return DerivedFile(
       id: _generateId(),
       sourceId: source.id,
-      format: intent.targetFormat,
+      format: intent.targetFormat ?? 'unknown',
       createdAt: DateTime.now(),
-      content: "Generated ${intent.targetFormat} content",
+      content: 'Generated ${intent.targetFormat ?? 'content'}',
       meta: {
         'intent': intent.type.name,
-        'generatedBy': 'boot',
+        'raw': true,
       },
     );
   }
