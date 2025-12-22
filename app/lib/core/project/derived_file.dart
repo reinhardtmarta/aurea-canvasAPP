@@ -1,24 +1,10 @@
-import 'dart:convert';
-import '../project/derived_file.dart';
-import 'local_storage.dart';
-
-Future<void> saveDerived(DerivedFile derived) async {
-  await storage.saveFile(
-    fileName: '${derived.id}.${derived.format}.json',
-    content: derived.toJson(),
-  );
-}
 class DerivedFile {
   final String id;
   final String sourceId;
-  final String format; // latex, markdown, png, json, code...
+  final String format;
   final DateTime createdAt;
-
-  /// Conteúdo traduzido pelo boot
-  final dynamic content;
-
-  /// Metadata de rastreabilidade
-  final Map<String, dynamic> meta;
+  final String content;
+  final Map<String, dynamic>? meta;
 
   DerivedFile({
     required this.id,
@@ -26,34 +12,26 @@ class DerivedFile {
     required this.format,
     required this.createdAt,
     required this.content,
-    required this.meta,
+    this.meta,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'type': 'derived',
-      'sourceId': sourceId,
-      'format': format,
-      'createdAt': createdAt.toIso8601String(),
-      'content': content,
-      'meta': meta,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'sourceId': sourceId,
+        'format': format,
+        'createdAt': createdAt.toIso8601String(),
+        'content': content,
+        'meta': meta,
+      };
 
-  factory DerivedFile.fromMap(Map<String, dynamic> map) {
+  factory DerivedFile.fromJson(Map<String, dynamic> json) {
     return DerivedFile(
-      id: map['id'],
-      sourceId: map['sourceId'],
-      format: map['format'],
-      createdAt: DateTime.parse(map['createdAt']),
-      content: map['content'],
-      meta: Map<String, dynamic>.from(map['meta']),
+      id: json['id'],
+      sourceId: json['sourceId'],
+      format: json['format'],
+      createdAt: DateTime.parse(json['createdAt']),
+      content: json['content'],
+      meta: json['meta'],
     );
   }
-
-  String toJson() => jsonEncode(toMap());
-
-  factory DerivedFile.fromJson(String source) =>
-      DerivedFile.fromMap(jsonDecode(source));
 }
