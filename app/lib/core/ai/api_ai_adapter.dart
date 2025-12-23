@@ -1,0 +1,3 @@
+class ApiAiAdapter implements AiAdapter {
+  ...
+  }
